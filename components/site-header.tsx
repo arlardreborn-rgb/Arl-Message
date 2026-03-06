@@ -80,8 +80,7 @@ export async function SiteHeader() {
 
               <form action="/chat" method="get">
                 <button
-                  className="rounded-2xl px-4 py-2 font-medium"
-                  className="shrink-0 rounded-2xl px-4 py-2"
+                  className="shrink-0 rounded-2xl px-4 py-2 font-medium"
                   style={{ background: 'var(--primary)', color: 'var(--primary-text)' }}
                 >
                   Открыть чат
