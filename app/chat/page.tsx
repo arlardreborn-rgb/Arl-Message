@@ -175,13 +175,27 @@ export default async function ChatPage({
   }
 
   return (
-    <main className="relative h-[calc(100svh-90px)] overflow-hidden px-3 py-3 md:px-6 md:py-6">
-      <div className="mx-auto h-full max-w-7xl">
-        <div className="grid h-full grid-cols-1 gap-4 md:grid-cols-[350px_1fr]">
+    <main
+      className={`relative overflow-hidden ${
+        activeDialogId
+          ? 'h-[100svh] px-0 py-0 md:h-[calc(100svh-88px)] md:px-3 md:py-3'
+          : 'h-[calc(100svh-88px)] px-3 py-3 md:px-5 md:py-5'
+      }`}
+    >
+      <div className={`${activeDialogId ? 'h-full max-w-none' : 'mx-auto h-full max-w-[1800px]'}`}>
+        <div
+          className={`grid h-full ${
+            activeDialogId
+              ? 'grid-cols-1 md:grid-cols-[320px_minmax(0,1fr)]'
+              : 'grid-cols-1 md:grid-cols-[360px_minmax(0,1fr)]'
+          } gap-0 md:gap-4`}
+        >
           <aside
             className={`${
-              activeDialogId ? 'hidden md:block' : 'block'
-            } orange-glass top-shine h-full min-h-0 rounded-[30px] p-4`}
+              activeDialogId ? 'hidden md:flex' : 'flex'
+            } orange-glass top-shine h-full min-h-0 flex-col ${
+              activeDialogId ? 'rounded-none md:rounded-[30px]' : 'rounded-[30px]'
+            } p-4`}
           >
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
@@ -199,7 +213,7 @@ export default async function ChatPage({
               </Link>
             </div>
 
-            <div className="h-[calc(100%-72px)] overflow-y-auto pr-1">
+            <div className="min-h-0 flex-1 overflow-y-auto pr-1">
               <ChatSidebar
                 initialItems={dialogItems}
                 activeDialogId={activeDialogId}
@@ -211,14 +225,20 @@ export default async function ChatPage({
           <section
             className={`${
               activeDialogId ? 'flex' : 'hidden md:flex'
-            } orange-glass top-shine h-full min-h-0 flex-col rounded-[30px] p-3 md:p-4`}
+            } orange-glass top-shine h-full min-h-0 flex-col ${
+              activeDialogId ? 'rounded-none md:rounded-[30px]' : 'rounded-[30px]'
+            } ${
+              activeDialogId ? 'p-0 md:p-4' : 'p-4'
+            }`}
           >
-            <ChatHeader
-              partner={chatPartner}
-              activeDialogId={activeDialogId}
-              currentUserId={user.id}
-              showBack={!!activeDialogId}
-            />
+            <div className={`${activeDialogId ? 'px-3 pt-3 md:px-0 md:pt-0' : ''} shrink-0`}>
+              <ChatHeader
+                partner={chatPartner}
+                activeDialogId={activeDialogId}
+                currentUserId={user.id}
+                showBack={!!activeDialogId}
+              />
+            </div>
 
             {activeDialogId ? <MarkDialogRead dialogId={activeDialogId} /> : null}
 
@@ -242,7 +262,7 @@ export default async function ChatPage({
             </div>
 
             {activeDialogId ? (
-              <div className="mt-3 shrink-0">
+              <div className="shrink-0 px-3 pb-3 pt-2 md:px-0 md:pb-0 md:pt-3">
                 <ChatComposer dialogId={activeDialogId} />
               </div>
             ) : null}
