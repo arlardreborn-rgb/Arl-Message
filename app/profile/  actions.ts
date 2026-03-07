@@ -5,6 +5,10 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function updateProfile(formData: FormData) {
   const username = String(formData.get('username') || '').trim().toLowerCase()
+
+  if (!/^[a-z0-9._-]{3,30}$/.test(username)) {
+  throw new Error('Username должен быть только на латинице, цифрах, ., _ или -')
+  }
   const display_name = String(formData.get('display_name') || '').trim()
   const bio = String(formData.get('bio') || '').trim()
 

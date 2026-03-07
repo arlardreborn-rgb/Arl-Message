@@ -5,6 +5,7 @@ import { RealtimeMessages } from '@/components/chat/realtime-messages'
 import { logout } from './logout'
 import { ChatFileUpload } from '@/components/chat/chat-file-upload'
 import { ChatMessages } from '@/components/chat/chat-messages'
+import { ChatHeader } from '@/components/chat/chat-header'
 import Link from 'next/link'
 
 export default async function ChatPage({
@@ -45,6 +46,31 @@ export default async function ChatPage({
 
   const activeDialogId =
     dialog && dialogIds.includes(dialog) ? dialog : dialogs?.[0]?.id
+    let chatPartner: {
+  id: string
+  username: string | null
+  display_name: string | null
+  avatar_url: string | null
+} | null = null
+
+if (activeDialogId) {
+  const { data: members } = await supabase
+    .from('dialog_members')
+    .select('user_id')
+    .eq('dialog_id', activeDialogId)
+
+  const otherUserId = members?.find((member) => member.user_id !== user.id)?.user_id
+
+  if (otherUserId) {
+    const { data: otherProfile } = await supabase
+      .from('profiles')
+      .select('id, username, display_name, avatar_url')
+      .eq('id', otherUserId)
+      .single()
+
+    chatPartner = otherProfile || null
+  }
+}
 
   const { data: messages } = activeDialogId
     ? await supabase
@@ -182,7 +208,7 @@ export default async function ChatPage({
             className="rounded-[28px] border p-4"
             style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border)' }}
           >
-            <div className="mb-4 text-2xl font-semibold">Сообщения</div>
+            <ChatHeader partner={chatPartner} />
 
             {activeDialogId ? <RealtimeMessages dialogId={activeDialogId} /> : null}
 
