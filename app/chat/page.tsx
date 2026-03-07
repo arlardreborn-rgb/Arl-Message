@@ -1,12 +1,27 @@
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { revalidatePath } from 'next/cache'
-import { RealtimeMessages } from '@/components/chat/realtime-messages'
-import { logout } from './logout'
-import { ChatFileUpload } from '@/components/chat/chat-file-upload'
-import { ChatMessages } from '@/components/chat/chat-messages'
-import { ChatHeader } from '@/components/chat/chat-header'
-import Link from 'next/link'
+import { ChatSidebar } from './chat-sidebar'
+import { ChatHeader } from './chat-header'
+import { ChatMessages } from './chat-messages'
+import { ChatComposer } from './chat-composer'
+import { MarkDialogRead } from './mark-dialog-read'
+
+type DialogItem = {
+  id: string
+  partner: {
+    id: string
+    username: string | null
+    display_name: string | null
+    avatar_url: string | null
+  } | null
+  lastMessage: {
+    body: string
+    sender_id: string
+    created_at: string
+  } | null
+  unreadCount: number
+}
 
 export default async function ChatPage({
   searchParams,
@@ -22,12 +37,6 @@ export default async function ChatPage({
 
   if (!user) redirect('/login')
 
-  const { data: myProfile } = await supabase
-    .from('profiles')
-    .select('id, username, display_name, avatar_url')
-    .eq('id', user.id)
-    .single()
-
   const { data: memberships } = await supabase
     .from('dialog_members')
     .select('dialog_id')
@@ -39,44 +48,91 @@ export default async function ChatPage({
     dialogIds.length > 0
       ? await supabase
           .from('dialogs')
-          .select('*')
+          .select('id, created_at, type')
           .in('id', dialogIds)
           .order('created_at', { ascending: false })
       : { data: [] as any[] }
 
+  const dialogItems: DialogItem[] = await Promise.all(
+    (dialogs || []).map(async (dialogRow) => {
+      const { data: members } = await supabase
+        .from('dialog_members')
+        .select('user_id')
+        .eq('dialog_id', dialogRow.id)
+
+      const otherUserId = members?.find((member) => member.user_id !== user.id)?.user_id
+
+      let partner: DialogItem['partner'] = null
+
+      if (otherUserId) {
+        const { data: otherProfile } = await supabase
+          .from('profiles')
+          .select('id, username, display_name, avatar_url')
+          .eq('id', otherUserId)
+          .single()
+
+        partner = otherProfile || null
+      }
+
+      const { data: lastMessage } = await supabase
+        .from('messages')
+        .select('body, sender_id, created_at')
+        .eq('dialog_id', dialogRow.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      const { data: readRow } = await supabase
+        .from('dialog_reads')
+        .select('last_read_at')
+        .eq('dialog_id', dialogRow.id)
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      const readAfter = readRow?.last_read_at || '1970-01-01T00:00:00Z'
+
+      const { count: unreadCount } = await supabase
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('dialog_id', dialogRow.id)
+        .neq('sender_id', user.id)
+        .gt('created_at', readAfter)
+
+      return {
+        id: dialogRow.id,
+        partner,
+        lastMessage: lastMessage || null,
+        unreadCount: unreadCount || 0,
+      }
+    })
+  )
+
+  dialogItems.sort((a, b) => {
+    const aTime = a.lastMessage?.created_at
+      ? new Date(a.lastMessage.created_at).getTime()
+      : 0
+    const bTime = b.lastMessage?.created_at
+      ? new Date(b.lastMessage.created_at).getTime()
+      : 0
+    return bTime - aTime
+  })
+
   const activeDialogId =
-    dialog && dialogIds.includes(dialog) ? dialog : dialogs?.[0]?.id
-    let chatPartner: {
-  id: string
-  username: string | null
-  display_name: string | null
-  avatar_url: string | null
-} | null = null
+    dialog && dialogIds.includes(dialog) ? dialog : undefined
 
-if (activeDialogId) {
-  const { data: members } = await supabase
-    .from('dialog_members')
-    .select('user_id')
-    .eq('dialog_id', activeDialogId)
+  const activeDialogItem =
+    activeDialogId ? dialogItems.find((item) => item.id === activeDialogId) || null : null
 
-  const otherUserId = members?.find((member) => member.user_id !== user.id)?.user_id
-
-  if (otherUserId) {
-    const { data: otherProfile } = await supabase
-      .from('profiles')
-      .select('id, username, display_name, avatar_url')
-      .eq('id', otherUserId)
-      .single()
-
-    chatPartner = otherProfile || null
-  }
-}
+  const chatPartner = activeDialogItem?.partner || null
 
   const { data: messages } = activeDialogId
     ? await supabase
         .from('messages')
         .select(`
-          *,
+          id,
+          sender_id,
+          body,
+          created_at,
           message_attachments (
             id,
             storage_path,
@@ -89,87 +145,30 @@ if (activeDialogId) {
         .order('created_at', { ascending: true })
     : { data: [] as any[] }
 
-  async function sendMessage(formData: FormData) {
-    'use server'
+  let otherUserLastReadAt: string | null = null
 
-    const dialogId = String(formData.get('dialogId') || '')
-    const body = String(formData.get('body') || '').trim()
-    const file = formData.get('file') as File | null
+  if (activeDialogId && chatPartner) {
+    const { data: readRow } = await supabase
+      .from('dialog_reads')
+      .select('last_read_at')
+      .eq('dialog_id', activeDialogId)
+      .eq('user_id', chatPartner.id)
+      .maybeSingle()
 
-    if (!dialogId) return
-
-    const supabase = await createClient()
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) throw new Error('Unauthorized')
-
-    const hasText = !!body
-    const hasFile = !!file && file.size > 0
-
-    if (!hasText && !hasFile) return
-
-    const messageBody = hasText
-      ? body
-      : file?.type?.startsWith('image/')
-      ? 'Изображение'
-      : 'Файл'
-
-    const { data: insertedMessage, error: messageError } = await supabase
-      .from('messages')
-      .insert({
-        dialog_id: dialogId,
-        sender_id: user.id,
-        body: messageBody,
-      })
-      .select('id')
-      .single()
-
-    if (messageError) {
-      throw new Error(messageError.message)
-    }
-
-    if (hasFile && file) {
-      const safeName = file.name.replaceAll(' ', '_')
-      const filePath = `${dialogId}/${user.id}/${Date.now()}-${safeName}`
-
-      const { error: uploadError } = await supabase.storage
-        .from('chat-files')
-        .upload(filePath, file)
-
-      if (uploadError) {
-        throw new Error(uploadError.message)
-      }
-
-      const { error: attachError } = await supabase
-        .from('message_attachments')
-        .insert({
-          message_id: insertedMessage.id,
-          storage_path: filePath,
-          file_name: file.name,
-          mime_type: file.type,
-          size_bytes: file.size,
-        })
-
-      if (attachError) {
-        throw new Error(attachError.message)
-      }
-    }
-
-    revalidatePath('/chat')
-    revalidatePath(`/chat?dialog=${dialogId}`)
+    otherUserLastReadAt = readRow?.last_read_at || null
   }
 
   return (
-    <main className="min-h-screen p-4 md:p-6" style={{ background: 'var(--bg)' }}>
-      <div className="mx-auto flex max-w-7xl flex-col gap-4">
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-[320px_1fr]">
+    <main className="min-h-screen px-3 py-3 md:px-6 md:py-6">
+      <div className="mx-auto max-w-7xl">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-[330px_1fr]">
           <aside
-            className="rounded-[28px] border p-4"
-            style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border)' }}
+            className={`${activeDialogId ? 'hidden md:block' : 'block'} rounded-[28px] border p-4`}
+            style={{
+              background: 'rgba(255,255,255,0.62)',
+              borderColor: 'var(--border)',
+              backdropFilter: 'blur(18px)',
+            }}
           >
             <div className="mb-4 flex items-center justify-between">
               <div className="text-2xl font-semibold">Чаты</div>
@@ -178,74 +177,51 @@ if (activeDialogId) {
               </Link>
             </div>
 
-            <div className="space-y-3">
-              {dialogs?.length ? (
-                dialogs.map((d) => (
-                  <Link
-                    key={d.id}
-                    href={`/chat?dialog=${d.id}`}
-                    className="block rounded-[22px] border p-4"
-                    style={{
-                      background: d.id === activeDialogId ? 'var(--panel-2)' : 'var(--panel)',
-                      borderColor: 'var(--border)',
-                    }}
-                  >
-                    <div className="font-medium">{d.title || 'Личный чат'}</div>
-                    <div className="text-sm" style={{ color: 'var(--text-muted)' }}>
-                      Защищённая переписка
-                    </div>
-                  </Link>
-                ))
-              ) : (
-                <div style={{ color: 'var(--text-muted)' }}>
-                  Пока нет чатов. Зайди в раздел «Люди» и начни диалог.
-                </div>
-              )}
-            </div>
+            <ChatSidebar
+              initialItems={dialogItems}
+              activeDialogId={activeDialogId}
+              currentUserId={user.id}
+            />
           </aside>
 
           <section
-            className="rounded-[28px] border p-4"
-            style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border)' }}
+            className={`${activeDialogId ? 'flex' : 'hidden md:flex'} min-h-[calc(100vh-110px)] flex-col rounded-[28px] border p-3 md:min-h-[calc(100vh-140px)] md:p-4`}
+            style={{
+              background: 'rgba(255,255,255,0.62)',
+              borderColor: 'var(--border)',
+              backdropFilter: 'blur(18px)',
+            }}
           >
-            <ChatHeader partner={chatPartner} />
+            <ChatHeader
+              partner={chatPartner}
+              activeDialogId={activeDialogId}
+              currentUserId={user.id}
+              showBack={!!activeDialogId}
+            />
 
-            {activeDialogId ? <RealtimeMessages dialogId={activeDialogId} /> : null}
+            {activeDialogId ? <MarkDialogRead dialogId={activeDialogId} /> : null}
 
-           {activeDialogId ? (
-  <ChatMessages
-    initialMessages={messages || []}
-    activeDialogId={activeDialogId}
-    currentUserId={user.id}
-  />
-) : (
-  <div style={{ color: 'var(--text-muted)' }}>
-    Выбери чат слева или найди человека через раздел «Люди»
-  </div>
-)}
-
-            <form action={sendMessage} className="flex flex-col gap-3">
-              <input type="hidden" name="dialogId" value={activeDialogId || ''} />
-
-              <div className="flex gap-3">
-                <input
-                  name="body"
-                  placeholder="Напиши сообщение..."
-                  className="w-full rounded-2xl border px-4 py-3"
-                  disabled={!activeDialogId}
+            <div className="flex-1 overflow-y-auto">
+              {activeDialogId ? (
+                <ChatMessages
+                  initialMessages={messages || []}
+                  activeDialogId={activeDialogId}
+                  currentUserId={user.id}
+                  partnerId={chatPartner?.id || null}
+                  initialOtherUserLastReadAt={otherUserLastReadAt}
                 />
-                <button
-                  type="submit"
-                  className="rounded-2xl px-5 py-3 font-medium"
-                  style={{ background: 'var(--primary)', color: 'var(--primary-text)' }}
-                  disabled={!activeDialogId}
-                >
-                  Отправить
-                </button>
-              </div>
-            </form>
+              ) : (
+                <div style={{ color: 'var(--text-muted)' }}>
+                  Выбери чат слева или найди человека через раздел «Люди»
+                </div>
+              )}
+            </div>
 
-            {activeDialogId ? <ChatFileUpload dialogId={activeDialogId} /> : null}
+            {activeDialogId ? (
+              <div className="mt-auto pt-2">
+                <ChatComposer dialogId={activeDialogId} />
+              </div>
+            ) : null}
           </section>
         </div>
       </div>

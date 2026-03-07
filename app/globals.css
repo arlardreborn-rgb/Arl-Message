@@ -1,15 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #fffaf5;
-  --bg-elevated: #ffffff;
-  --panel: #fff3e6;
-  --panel-2: #ffe8d1;
-  --text: #2d241f;
-  --text-muted: #7d6d63;
-  --border: #f0d8c1;
-  --primary: #f4a261;
+  --bg: #f7f8fb;
+  --bg-elevated: rgba(255, 255, 255, 0.72);
+  --panel: rgba(255, 255, 255, 0.58);
+  --panel-2: rgba(255, 255, 255, 0.82);
+  --text: #17212b;
+  --text-muted: #71808f;
+  --border: rgba(255, 255, 255, 0.55);
+  --primary: #FFA000;
   --primary-text: #ffffff;
+  --shadow: 0 20px 50px rgba(19, 34, 68, 0.08);
 }
 
 html,
@@ -17,12 +18,12 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100%;
-  background:
-    radial-gradient(circle at top left, rgba(255, 214, 170, 0.5), transparent 35%),
-    radial-gradient(circle at bottom right, rgba(255, 235, 214, 0.9), transparent 30%),
-    linear-gradient(180deg, #fffaf5 0%, #fff3e6 100%);
   color: var(--text);
   font-family: Arial, Helvetica, sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(137, 190, 255, 0.24), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(170, 222, 255, 0.18), transparent 26%),
+    linear-gradient(180deg, #eef4ff 0%, #f8fbff 48%, #f4f7fb 100%);
 }
 
 * {
@@ -32,4 +33,31 @@ body {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+.glass-panel {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: var(--shadow);
+}
+
+.glass-soft {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.glass-button {
+  transition: all 0.2s ease;
+}
+
+.glass-button:hover {
+  transform: translateY(-1px);
+}
+
+.glass-button:active {
+  transform: scale(0.98);
 }

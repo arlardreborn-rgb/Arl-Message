@@ -24,8 +24,8 @@ export async function SiteHeader() {
     <header
       className="border-b px-4 py-4"
       style={{
-        background: 'var(--bg-elevated)',
-        borderColor: 'var(--border)',
+     background: 'rgba(255,255,255,0.78)',
+    border: '1px solid var(--border)',
       }}
     >
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
@@ -36,7 +36,7 @@ export async function SiteHeader() {
         <nav className="flex flex-wrap items-center gap-3">
           <Link
             href="/"
-            className="rounded-2xl px-4 py-2"
+            className="glass-button shrink-0 rounded-2xl px-4 py-2"
             style={{ background: 'var(--panel-2)', color: 'var(--text)' }}
           >
             Главная
@@ -46,15 +46,18 @@ export async function SiteHeader() {
             <>
               <Link
                 href="/chat"
-                className="rounded-2xl px-4 py-2"
-                style={{ background: 'var(--panel-2)', color: 'var(--text)' }}
+                className="glass-button shrink-0 rounded-2xl px-4 py-2"
+                style={{
+  background: 'linear-gradient(135deg, #FF7F49 0%, #FF7F49 100%)',
+  color: 'var(--primary-text)',
+}}
               >
                 Мои чаты
               </Link>
 
               <Link
                 href="/people"
-                className="rounded-2xl px-4 py-2"
+                className="glass-button shrink-0 rounded-2xl px-4 py-2"
                 style={{ background: 'var(--panel-2)', color: 'var(--text)' }}
               >
                 Люди
@@ -62,7 +65,7 @@ export async function SiteHeader() {
 
               <Link
                 href="/profile"
-                className="rounded-2xl px-4 py-2"
+                className="glass-button shrink-0 rounded-2xl px-4 py-2"
                 style={{ background: 'var(--panel-2)', color: 'var(--text)' }}
               >
                 Профиль
@@ -71,7 +74,7 @@ export async function SiteHeader() {
               {username ? (
                 <Link
                   href={`/u/${username}`}
-                  className="rounded-2xl px-4 py-2"
+                  className="glass-button shrink-0 rounded-2xl px-4 py-2"
                   style={{ background: 'var(--panel-2)', color: 'var(--text)' }}
                 >
                   Моя страница
@@ -91,7 +94,7 @@ export async function SiteHeader() {
             <>
               <Link
                 href="/login"
-                className="rounded-2xl px-4 py-2"
+                className="glass-button shrink-0 rounded-2xl px-4 py-2"
                 style={{ background: 'var(--panel-2)', color: 'var(--text)' }}
               >
                 Войти
