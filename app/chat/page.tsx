@@ -53,59 +53,90 @@ export default async function ChatPage({
           .order('created_at', { ascending: false })
       : { data: [] as any[] }
 
-  const dialogItems: DialogItem[] = await Promise.all(
-    (dialogs || []).map(async (dialogRow) => {
-      const { data: members } = await supabase
-        .from('dialog_members')
-        .select('user_id')
-        .eq('dialog_id', dialogRow.id)
+  const { data: allMembers, error: allMembersError } = dialogIds.length
+  ? await supabase
+      .from('dialog_members')
+      .select('dialog_id, user_id')
+      .in('dialog_id', dialogIds)
+  : { data: [], error: null }
 
-      const otherUserId = members?.find((member) => member.user_id !== user.id)?.user_id
+if (allMembersError) {
+  console.log('ALL MEMBERS ERROR:', allMembersError)
+}
 
-      let partner: DialogItem['partner'] = null
+const membersByDialog = new Map<string, { dialog_id: string; user_id: string }[]>()
 
-      if (otherUserId) {
-        const { data: otherProfile } = await supabase
-          .from('profiles')
-          .select('id, username, display_name, avatar_url')
-          .eq('id', otherUserId)
-          .single()
+for (const row of allMembers || []) {
+  const current = membersByDialog.get(row.dialog_id) || []
+  current.push(row)
+  membersByDialog.set(row.dialog_id, current)
+}
 
-        partner = otherProfile || null
-      }
-
-      const { data: lastMessage } = await supabase
-        .from('messages')
-        .select('body, sender_id, created_at')
-        .eq('dialog_id', dialogRow.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-
-      const { data: readRow } = await supabase
-        .from('dialog_reads')
-        .select('last_read_at')
-        .eq('dialog_id', dialogRow.id)
-        .eq('user_id', user.id)
-        .maybeSingle()
-
-      const readAfter = readRow?.last_read_at || '1970-01-01T00:00:00Z'
-
-      const { count: unreadCount } = await supabase
-        .from('messages')
-        .select('*', { count: 'exact', head: true })
-        .eq('dialog_id', dialogRow.id)
-        .neq('sender_id', user.id)
-        .gt('created_at', readAfter)
-
-      return {
-        id: dialogRow.id,
-        partner,
-        lastMessage: lastMessage || null,
-        unreadCount: unreadCount || 0,
-      }
-    })
+const otherUserIds = Array.from(
+  new Set(
+    (dialogs || [])
+      .map((dialogRow) => {
+        const members = membersByDialog.get(dialogRow.id) || []
+        const otherMember = members.find((m) => m.user_id !== user.id)
+        return otherMember?.user_id || null
+      })
+      .filter(Boolean)
   )
+) as string[]
+
+const { data: partnerProfiles, error: partnerProfilesError } = otherUserIds.length
+  ? await supabase
+      .from('profiles')
+      .select('id, username, display_name, avatar_url')
+      .in('id', otherUserIds)
+  : { data: [], error: null }
+
+if (partnerProfilesError) {
+  console.log('PARTNER PROFILES ERROR:', partnerProfilesError)
+}
+
+const profileMap = new Map(
+  (partnerProfiles || []).map((profile) => [profile.id, profile])
+)
+
+const dialogItems: DialogItem[] = await Promise.all(
+  (dialogs || []).map(async (dialogRow) => {
+    const members = membersByDialog.get(dialogRow.id) || []
+    const otherMember = members.find((m) => m.user_id !== user.id)
+    const partner = otherMember ? profileMap.get(otherMember.user_id) || null : null
+
+    const { data: lastMessage } = await supabase
+      .from('messages')
+      .select('body, sender_id, created_at')
+      .eq('dialog_id', dialogRow.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    const { data: readRow } = await supabase
+      .from('dialog_reads')
+      .select('last_read_at')
+      .eq('dialog_id', dialogRow.id)
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    const readAfter = readRow?.last_read_at || '1970-01-01T00:00:00Z'
+
+    const { count: unreadCount } = await supabase
+      .from('messages')
+      .select('*', { count: 'exact', head: true })
+      .eq('dialog_id', dialogRow.id)
+      .neq('sender_id', user.id)
+      .gt('created_at', readAfter)
+
+    return {
+      id: dialogRow.id,
+      partner,
+      lastMessage: lastMessage || null,
+      unreadCount: unreadCount || 0,
+    }
+  })
+)
 
   dialogItems.sort((a, b) => {
     const aTime = a.lastMessage?.created_at
