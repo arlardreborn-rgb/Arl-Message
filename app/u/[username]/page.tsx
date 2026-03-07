@@ -1,6 +1,6 @@
+import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { Link } from 'lucide-react'
 
 export default async function PublicProfilePage({
   params,
@@ -37,12 +37,24 @@ export default async function PublicProfilePage({
 
     const supabase = await createClient()
 
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      throw new Error('Unauthorized')
+    }
+
     const { data, error } = await supabase.rpc('find_or_create_direct_dialog', {
       other_user_id: otherUserId,
     })
 
     if (error) {
       throw new Error(error.message)
+    }
+
+    if (!data) {
+      throw new Error('Диалог не был создан')
     }
 
     redirect(`/chat?dialog=${data}`)
@@ -96,6 +108,7 @@ export default async function PublicProfilePage({
                 <form action={startDirectChat}>
                   <input type="hidden" name="otherUserId" value={profile.id} />
                   <button
+                    type="submit"
                     className="rounded-2xl px-5 py-3 font-medium"
                     style={{ background: 'var(--primary)', color: 'var(--primary-text)' }}
                   >
