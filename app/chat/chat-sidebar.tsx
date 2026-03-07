@@ -126,11 +126,15 @@ export function ChatSidebar({
       {items.length ? (
         items.map((item) => {
           const partnerName =
-            item.partner?.display_name || item.partner?.username || 'Пользователь'
-          const partnerUsername = item.partner?.username
-            ? `@${item.partner.username}`
-            : ''
-          const preview = item.lastMessage?.body || 'Нет сообщений'
+  item.partner?.display_name || item.partner?.username || 'Пользователь'
+
+const partnerMeta = item.partner?.username
+  ? `@${item.partner.username}`
+  : item.partner?.display_name
+  ? 'Без username'
+  : 'Профиль не найден'
+
+const preview = item.lastMessage?.body || 'Нет сообщений'
 
           return (
             <Link
@@ -170,17 +174,17 @@ export function ChatSidebar({
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-semibold">{partnerName}</div>
                   <div
-                    className="truncate text-xs"
-                    style={{ color: 'var(--text-muted)' }}
-                  >
-                    {partnerUsername || preview}
-                  </div>
-                  <div
-                    className="truncate text-sm"
-                    style={{ color: 'var(--text-muted)' }}
-                  >
-                    {preview}
-                  </div>
+  className="truncate text-xs"
+  style={{ color: 'var(--text-muted)' }}
+>
+  {partnerMeta}
+</div>
+<div
+  className="truncate text-sm"
+  style={{ color: 'var(--text-muted)' }}
+>
+  {preview}
+</div>
                 </div>
 
                 {item.unreadCount > 0 ? (
