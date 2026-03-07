@@ -45,41 +45,32 @@ export default async function ChatPage({
 
   if (!user) redirect('/login')
 
-  const { data: memberships, error: membershipsError } = await supabase
+  const { data: memberships } = await supabase
     .from('dialog_members')
     .select('dialog_id')
     .eq('user_id', user.id)
 
-  console.log('MEMBERSHIPS ERROR:', membershipsError)
-  console.log('MEMBERSHIPS DATA:', memberships)
-
   const dialogIds = memberships?.map((m) => m.dialog_id) ?? []
 
-  const { data: dialogs, error: dialogsError } =
+  const { data: dialogs } =
     dialogIds.length > 0
       ? await supabase
           .from('dialogs')
           .select('id, created_at, type')
           .in('id', dialogIds)
           .order('created_at', { ascending: false })
-      : { data: [], error: null }
+      : { data: [] as any[] }
 
-  console.log('DIALOGS ERROR:', dialogsError)
-  console.log('DIALOGS DATA:', dialogs)
-
-  const { data: rawPartnersData, error: partnersError } = dialogIds.length
+  const { data: rawPartnersData } = dialogIds.length
     ? await supabase.rpc('get_my_dialog_partners', {
         dialog_ids_input: dialogIds,
       })
-    : { data: [], error: null }
+    : { data: [] as any[] }
 
   const partnersData = (rawPartnersData ?? []) as PartnerRow[]
 
-  console.log('PARTNERS ERROR:', partnersError)
-  console.log('PARTNERS DATA:', partnersData)
-
   const partnerMap = new Map<string, DialogItem['partner']>(
-    partnersData.map((row: PartnerRow) => [
+    partnersData.map((row) => [
       row.dialog_id,
       {
         id: row.partner_id,
@@ -144,11 +135,6 @@ export default async function ChatPage({
       ? String(dialog)
       : undefined
 
-  console.log('QUERY DIALOG:', dialog)
-  console.log('DIALOG IDS:', dialogIds)
-  console.log('ACTIVE DIALOG ID:', activeDialogId)
-  console.log('DIALOG ITEMS:', JSON.stringify(dialogItems, null, 2))
-
   const activeDialogItem = activeDialogId
     ? dialogItems.find((item) => item.id === activeDialogId) || null
     : null
@@ -189,38 +175,43 @@ export default async function ChatPage({
   }
 
   return (
-    <main className="min-h-screen px-3 py-3 md:px-6 md:py-6">
-      <div className="mx-auto max-w-7xl">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-[330px_1fr]">
+    <main className="relative h-[calc(100svh-90px)] overflow-hidden px-3 py-3 md:px-6 md:py-6">
+      <div className="mx-auto h-full max-w-7xl">
+        <div className="grid h-full grid-cols-1 gap-4 md:grid-cols-[350px_1fr]">
           <aside
-            className={`${activeDialogId ? 'hidden md:block' : 'block'} rounded-[28px] border p-4`}
-            style={{
-              background: 'rgba(255,255,255,0.62)',
-              borderColor: 'var(--border)',
-              backdropFilter: 'blur(18px)',
-            }}
+            className={`${
+              activeDialogId ? 'hidden md:block' : 'block'
+            } orange-glass top-shine h-full min-h-0 rounded-[30px] p-4`}
           >
-            <div className="mb-4 flex items-center justify-between">
-              <div className="text-2xl font-semibold">Чаты</div>
-              <Link href="/people" className="text-sm underline">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <div className="text-2xl font-bold">Чаты</div>
+                <div className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                  Личные переписки
+                </div>
+              </div>
+
+              <Link
+                href="/people"
+                className="orange-button orange-secondary shrink-0 rounded-2xl px-4 py-2 text-sm font-medium"
+              >
                 Найти человека
               </Link>
             </div>
 
-            <ChatSidebar
-              initialItems={dialogItems}
-              activeDialogId={activeDialogId}
-              currentUserId={user.id}
-            />
+            <div className="h-[calc(100%-72px)] overflow-y-auto pr-1">
+              <ChatSidebar
+                initialItems={dialogItems}
+                activeDialogId={activeDialogId}
+                currentUserId={user.id}
+              />
+            </div>
           </aside>
 
           <section
-            className={`${activeDialogId ? 'flex' : 'hidden md:flex'} min-h-[calc(100vh-110px)] flex-col rounded-[28px] border p-3 md:min-h-[calc(100vh-140px)] md:p-4`}
-            style={{
-              background: 'rgba(255,255,255,0.62)',
-              borderColor: 'var(--border)',
-              backdropFilter: 'blur(18px)',
-            }}
+            className={`${
+              activeDialogId ? 'flex' : 'hidden md:flex'
+            } orange-glass top-shine h-full min-h-0 flex-col rounded-[30px] p-3 md:p-4`}
           >
             <ChatHeader
               partner={chatPartner}
@@ -231,7 +222,7 @@ export default async function ChatPage({
 
             {activeDialogId ? <MarkDialogRead dialogId={activeDialogId} /> : null}
 
-            <div className="flex-1 overflow-y-auto">
+            <div className="min-h-0 flex-1">
               {activeDialogId ? (
                 <ChatMessages
                   initialMessages={messages || []}
@@ -241,14 +232,17 @@ export default async function ChatPage({
                   initialOtherUserLastReadAt={otherUserLastReadAt}
                 />
               ) : (
-                <div style={{ color: 'var(--text-muted)' }}>
-                  Выбери чат слева или найди человека через раздел «Люди»
+                <div className="orange-glass-soft flex h-full min-h-[420px] flex-col items-center justify-center rounded-[28px] p-8 text-center">
+                  <div className="mb-3 text-2xl font-bold">Выбери диалог</div>
+                  <div style={{ color: 'var(--text-muted)' }}>
+                    Открой существующий чат слева или найди нового собеседника в разделе «Люди».
+                  </div>
                 </div>
               )}
             </div>
 
             {activeDialogId ? (
-              <div className="mt-auto pt-2">
+              <div className="mt-3 shrink-0">
                 <ChatComposer dialogId={activeDialogId} />
               </div>
             ) : null}

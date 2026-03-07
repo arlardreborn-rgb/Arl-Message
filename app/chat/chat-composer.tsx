@@ -168,7 +168,7 @@ export function ChatComposer({ dialogId }: { dialogId: string }) {
   }
 
   return (
-    <div className="pt-2">
+    <div className="orange-glass-soft rounded-[26px] p-3 md:p-4">
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <div className="flex flex-col gap-3 sm:flex-row">
           <input
@@ -188,28 +188,25 @@ export function ChatComposer({ dialogId }: { dialogId: string }) {
               }, 1200)
             }}
             placeholder="Напиши сообщение..."
-            className="w-full rounded-2xl border px-4 py-3"
+            className="w-full rounded-[22px] border px-4 py-3"
             style={{
-              background: 'rgba(255,255,255,0.76)',
+              background: 'rgba(255,255,255,0.84)',
               borderColor: 'var(--border)',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.25)',
             }}
           />
 
           <button
             type="submit"
             disabled={sending}
-            className="rounded-2xl px-5 py-3 font-medium"
-            style={{
-              background: 'linear-gradient(135deg, #5b9cff 0%, #79b2ff 100%)',
-              color: 'var(--primary-text)',
-            }}
+            className="orange-button orange-primary rounded-[22px] px-6 py-3 font-semibold"
           >
             {sending ? '...' : 'Отправить'}
           </button>
         </div>
       </form>
 
-      <div className="mt-3 flex items-center gap-3">
+      <div className="mt-3 flex flex-wrap items-center gap-3">
         <input
           ref={fileInputRef}
           type="file"
@@ -227,17 +224,13 @@ export function ChatComposer({ dialogId }: { dialogId: string }) {
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
-          className="rounded-2xl px-4 py-3 font-medium"
-          style={{
-            background: 'rgba(255,255,255,0.72)',
-            border: '1px solid var(--border)',
-          }}
+          className="orange-button orange-secondary rounded-[20px] px-4 py-3 font-medium"
         >
           {uploading ? 'Загрузка...' : 'Файл / картинка'}
         </button>
 
         <div className="text-sm" style={{ color: 'var(--text-muted)' }}>
-          Можно отправить изображение или файл
+          Можно отправить изображение или обычный файл
         </div>
       </div>
     </div>

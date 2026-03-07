@@ -61,49 +61,27 @@ export function ChatHeader({
 
   if (!partner) {
     return (
-      <div
-        className="mb-4 rounded-[24px] border px-4 py-3"
-        style={{
-          background: 'rgba(255,255,255,0.62)',
-          borderColor: 'var(--border)',
-          backdropFilter: 'blur(16px)',
-        }}
-      >
-        <div className="text-lg font-semibold">Чат</div>
+      <div className="orange-glass-soft mb-4 rounded-[26px] px-4 py-4">
+        <div className="text-lg font-bold">Чат</div>
         <div style={{ color: 'var(--text-muted)' }}>Выбери диалог слева</div>
       </div>
     )
   }
 
   return (
-    <div
-      className="mb-4 rounded-[24px] border px-4 py-3"
-      style={{
-        background: 'rgba(255,255,255,0.62)',
-        borderColor: 'var(--border)',
-        backdropFilter: 'blur(16px)',
-      }}
-    >
+    <div className="orange-glass-soft top-shine mb-4 rounded-[26px] px-4 py-4">
       <div className="flex items-center gap-3">
         {showBack ? (
           <Link
             href="/chat"
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full md:hidden"
-            style={{
-              background: 'rgba(255,255,255,0.72)',
-              border: '1px solid var(--border)',
-            }}
+            className="orange-button orange-secondary inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full md:hidden"
           >
             ←
           </Link>
         ) : null}
 
         <div
-          className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border"
-          style={{
-            background: 'rgba(255,255,255,0.72)',
-            borderColor: 'var(--border)',
-          }}
+          className="orange-3d flex h-14 w-14 items-center justify-center overflow-hidden rounded-full"
         >
           {partner.avatar_url ? (
             <img
@@ -112,14 +90,12 @@ export function ChatHeader({
               className="h-full w-full object-cover"
             />
           ) : (
-            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              avatar
-            </span>
+            <span className="text-sm font-semibold text-white">AVA</span>
           )}
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="truncate text-lg font-semibold">
+          <div className="truncate text-xl font-bold">
             {partner.display_name || partner.username || 'Пользователь'}
           </div>
 
@@ -131,11 +107,7 @@ export function ChatHeader({
         {partner.username ? (
           <Link
             href={`/u/${partner.username}`}
-            className="hidden rounded-2xl px-4 py-2 text-sm font-medium sm:inline-flex"
-            style={{
-              background: 'rgba(255,255,255,0.74)',
-              border: '1px solid var(--border)',
-            }}
+            className="orange-button orange-secondary hidden rounded-2xl px-4 py-2 text-sm font-medium sm:inline-flex"
           >
             Профиль
           </Link>

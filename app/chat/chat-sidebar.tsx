@@ -122,41 +122,42 @@ export function ChatSidebar({
   }, [activeDialogId, currentUserId])
 
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-3">
       {items.length ? (
         items.map((item) => {
           const partnerName =
-  item.partner?.display_name || item.partner?.username || 'Пользователь'
+            item.partner?.display_name || item.partner?.username || 'Пользователь'
 
-const partnerMeta = item.partner?.username
-  ? `@${item.partner.username}`
-  : item.partner?.display_name
-  ? 'Без username'
-  : 'Профиль не найден'
+          const partnerMeta = item.partner?.username
+            ? `@${item.partner.username}`
+            : item.partner?.display_name
+            ? 'Без username'
+            : 'Профиль не найден'
 
-const preview = item.lastMessage?.body || 'Нет сообщений'
+          const preview = item.lastMessage?.body || 'Нет сообщений'
 
           return (
             <Link
               key={item.id}
               href={`/chat?dialog=${item.id}`}
-              className="block rounded-[22px] p-3"
+              className="orange-button block rounded-[24px] p-3.5"
               style={{
                 background:
                   item.id === activeDialogId
-                    ? 'rgba(91, 156, 255, 0.16)'
-                    : 'rgba(255,255,255,0.58)',
+                    ? 'linear-gradient(135deg, rgba(255,122,26,0.18) 0%, rgba(255,166,94,0.22) 100%)'
+                    : 'rgba(255,255,255,0.56)',
                 border: '1px solid var(--border)',
-                backdropFilter: 'blur(12px)',
+                boxShadow:
+                  item.id === activeDialogId
+                    ? '0 14px 30px rgba(255,122,26,0.14)'
+                    : '0 10px 24px rgba(255,122,26,0.06)',
+                backdropFilter: 'blur(14px)',
               }}
             >
               <div className="flex items-center gap-3">
                 <div
-                  className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border"
-                  style={{
-                    background: 'rgba(255,255,255,0.74)',
-                    borderColor: 'var(--border)',
-                  }}
+                  className="orange-3d flex h-13 w-13 shrink-0 items-center justify-center overflow-hidden rounded-full"
+                  style={{ width: 52, height: 52 }}
                 >
                   {item.partner?.avatar_url ? (
                     <img
@@ -165,35 +166,25 @@ const preview = item.lastMessage?.body || 'Нет сообщений'
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                      avatar
-                    </span>
+                    <span className="text-xs font-semibold text-white">AVA</span>
                   )}
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <div className="truncate font-semibold">{partnerName}</div>
-                  <div
-  className="truncate text-xs"
-  style={{ color: 'var(--text-muted)' }}
->
-  {partnerMeta}
-</div>
-<div
-  className="truncate text-sm"
-  style={{ color: 'var(--text-muted)' }}
->
-  {preview}
-</div>
+                  <div className="truncate text-[16px] font-bold">{partnerName}</div>
+
+                  <div className="truncate text-xs" style={{ color: 'var(--text-muted)' }}>
+                    {partnerMeta}
+                  </div>
+
+                  <div className="mt-0.5 truncate text-sm" style={{ color: 'var(--text-muted)' }}>
+                    {preview}
+                  </div>
                 </div>
 
                 {item.unreadCount > 0 ? (
                   <div
-                    className="flex min-w-[24px] items-center justify-center rounded-full px-2 py-1 text-xs font-bold"
-                    style={{
-                      background: '#FF7F49',
-                      color: '#fff',
-                    }}
+                    className="orange-3d flex min-w-[26px] items-center justify-center rounded-full px-2 py-1 text-xs font-bold text-white"
                   >
                     {item.unreadCount}
                   </div>
@@ -203,7 +194,10 @@ const preview = item.lastMessage?.body || 'Нет сообщений'
           )
         })
       ) : (
-        <div style={{ color: 'var(--text-muted)' }}>
+        <div
+          className="orange-glass-soft rounded-[24px] p-5"
+          style={{ color: 'var(--text-muted)' }}
+        >
           Пока нет чатов. Зайди в раздел «Люди» и начни диалог.
         </div>
       )}

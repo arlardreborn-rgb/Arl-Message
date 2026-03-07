@@ -1,8 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import Link from 'next/link'
 
 type Attachment = {
   id: string
@@ -38,6 +37,10 @@ export function ChatMessages({
     initialOtherUserLastReadAt
   )
 
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  const bottomRef = useRef<HTMLDivElement | null>(null)
+  const isFirstRenderRef = useRef(true)
+
   useEffect(() => {
     const unique = Array.from(
       new Map(initialMessages.map((msg) => [msg.id, msg])).values()
@@ -48,6 +51,13 @@ export function ChatMessages({
   useEffect(() => {
     setOtherUserLastReadAt(initialOtherUserLastReadAt)
   }, [initialOtherUserLastReadAt])
+
+  useEffect(() => {
+    if (isFirstRenderRef.current) {
+      bottomRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' })
+      isFirstRenderRef.current = false
+    }
+  }, [])
 
   useEffect(() => {
     if (!activeDialogId) return
@@ -122,91 +132,108 @@ export function ChatMessages({
     }
   }, [activeDialogId, partnerId])
 
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   return (
-    <div className="mb-6 space-y-2.5">
-      {messages.length ? (
-        messages.map((msg) => {
-          const mine = msg.sender_id === currentUserId
+    <div
+      ref={containerRef}
+      className="h-full overflow-y-auto rounded-[26px] px-1 py-1"
+    >
+      <div className="space-y-2.5">
+        {messages.length ? (
+          messages.map((msg) => {
+            const mine = msg.sender_id === currentUserId
 
-          const isRead =
-            mine &&
-            otherUserLastReadAt &&
-            new Date(otherUserLastReadAt).getTime() >=
-              new Date(msg.created_at).getTime()
+            const isRead =
+              mine &&
+              otherUserLastReadAt &&
+              new Date(otherUserLastReadAt).getTime() >=
+                new Date(msg.created_at).getTime()
 
-          return (
-            <div key={msg.id}>
-              <div
-                className={`max-w-[84%] rounded-[20px] px-3.5 py-2.5 md:max-w-[70%] ${
-                  mine ? 'ml-auto' : ''
-                }`}
-                style={{
-                  background: mine
-                    ? 'linear-gradient(135deg, #FF7F49 0%, #ff8349 100%)'
-                    : 'rgba(255, 255, 255, 0.83)',
-                  color: mine ? 'var(--primary-text)' : 'var(--text)',
-                  border: '1px solid var(--border)',
-                  backdropFilter: 'blur(12px)',
-                }}
-              >
-                <div className="text-[15px] leading-6">{msg.body}</div>
+            return (
+              <div key={msg.id} className="card-pop">
+                <div
+                  className={`max-w-[84%] rounded-[22px] px-4 py-3 md:max-w-[70%] ${
+                    mine ? 'ml-auto' : ''
+                  }`}
+                  style={{
+                    background: mine
+                      ? 'linear-gradient(135deg, #ff7a1a 0%, #ff9747 58%, #ffb36d 100%)'
+                      : 'rgba(255,255,255,0.74)',
+                    color: mine ? '#fff' : 'var(--text)',
+                    border: '1px solid var(--border)',
+                    boxShadow: mine
+                      ? '0 12px 28px rgba(255,122,26,0.18), inset 0 1px 0 rgba(255,255,255,0.18)'
+                      : '0 8px 22px rgba(255,122,26,0.06)',
+                    backdropFilter: 'blur(12px)',
+                  }}
+                >
+                  <div className="text-[15px] leading-6">{msg.body}</div>
 
-                {msg.message_attachments?.length ? (
-                  <div className="mt-2.5 space-y-2">
-                    {msg.message_attachments.map((att) => {
-                      const isImage = String(att.mime_type || '').startsWith('image/')
-                      const {
-                        data: { publicUrl: fileUrl },
-                      } = supabase.storage.from('chat-files').getPublicUrl(att.storage_path)
+                  {msg.message_attachments?.length ? (
+                    <div className="mt-3 space-y-2">
+                      {msg.message_attachments.map((att) => {
+                        const isImage = String(att.mime_type || '').startsWith('image/')
+                        const {
+                          data: { publicUrl: fileUrl },
+                        } = supabase.storage.from('chat-files').getPublicUrl(att.storage_path)
 
-                      return (
-                        <div key={att.id}>
-                          {isImage ? (
-                            <Link href={fileUrl} target="_blank">
-                              <img
-                                src={fileUrl}
-                                alt={att.file_name || 'image'}
-                                className="max-h-64 rounded-xl border"
-                              />
-                            </Link>
-                          ) : (
-                            <Link
-                              href={fileUrl}
-                              target="_blank"
-                              className="block rounded-xl border px-3 py-2 text-sm underline"
-                              style={{
-                                borderColor: 'var(--border)',
-                                background: 'rgba(255,255,255,0.22)',
-                              }}
-                            >
-                              {att.file_name || 'Файл'}
-                            </Link>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                ) : null}
+                        return (
+                          <div key={att.id}>
+                            {isImage ? (
+                              <a href={fileUrl} target="_blank">
+                                <img
+                                  src={fileUrl}
+                                  alt={att.file_name || 'image'}
+                                  className="max-h-72 rounded-2xl border"
+                                />
+                              </a>
+                            ) : (
+                              <a
+                                href={fileUrl}
+                                target="_blank"
+                                className="block rounded-2xl border px-3 py-2 text-sm underline"
+                                style={{
+                                  borderColor: mine ? 'rgba(255,255,255,0.22)' : 'var(--border)',
+                                  background: mine
+                                    ? 'rgba(255,255,255,0.16)'
+                                    : 'rgba(255,255,255,0.38)',
+                                }}
+                              >
+                                {att.file_name || 'Файл'}
+                              </a>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ) : null}
 
-                {isRead ? (
-                  <div
-                    className="mt-1.5 text-right text-[11px]"
-                    style={{
-                      color: mine ? 'rgba(255,255,255,0.74)' : 'var(--text-muted)',
-                    }}
-                  >
-                    Прочитано
-                  </div>
-                ) : null}
+                  {isRead ? (
+                    <div
+                      className="mt-2 text-right text-[11px]"
+                      style={{
+                        color: mine ? 'rgba(255,255,255,0.78)' : 'var(--text-muted)',
+                      }}
+                    >
+                      Прочитано
+                    </div>
+                  ) : null}
+                </div>
               </div>
-            </div>
-          )
-        })
-      ) : (
-        <div style={{ color: 'var(--text-muted)' }}>Пока нет сообщений</div>
-      )}
+            )
+          })
+        ) : (
+          <div
+            className="orange-glass-soft rounded-[24px] p-5"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            Пока нет сообщений
+          </div>
+        )}
+
+        <div ref={bottomRef} />
+      </div>
     </div>
   )
 }

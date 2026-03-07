@@ -8,36 +8,29 @@ export async function SiteHeader() {
     data: { user },
   } = await supabase.auth.getUser()
 
-  let username = ''
+  let username: string | null = null
 
   if (user) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('username')
       .eq('id', user.id)
-      .single()
+      .maybeSingle()
 
-    username = profile?.username || ''
+    username = profile?.username || null
   }
 
   return (
-    <header
-      className="border-b px-4 py-4"
-      style={{
-     background: 'rgba(255,255,255,0.78)',
-    border: '1px solid var(--border)',
-      }}
-    >
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
-        <Link href="/" className="text-xl font-bold">
-          Secure Messenger
+    <header className="sticky top-0 z-50 px-3 pt-3 md:px-6 md:pt-5">
+      <div className="orange-glass top-shine mx-auto flex max-w-7xl items-center justify-between rounded-[28px] px-4 py-3 md:px-6">
+        <Link href="/" className="orange-button shrink-0">
+          <div className="text-xl font-bold md:text-2xl">ArlMessage</div>
         </Link>
-        <nav className="flex max-w-full gap-3 overflow-x-auto pb-1"></nav>
-        <nav className="flex flex-wrap items-center gap-3">
+
+        <nav className="flex max-w-[72vw] gap-2 overflow-x-auto pb-1 md:max-w-none md:gap-3">
           <Link
             href="/"
-            className="glass-button shrink-0 rounded-2xl px-4 py-2"
-            style={{ background: 'var(--panel-2)', color: 'var(--text)' }}
+            className="orange-button orange-secondary shrink-0 rounded-2xl px-4 py-2 text-sm font-medium md:px-5 md:py-3 md:text-base"
           >
             Главная
           </Link>
@@ -46,27 +39,21 @@ export async function SiteHeader() {
             <>
               <Link
                 href="/chat"
-                className="glass-button shrink-0 rounded-2xl px-4 py-2"
-                style={{
-  background: 'linear-gradient(135deg, #FF7F49 0%, #FF7F49 100%)',
-  color: 'var(--primary-text)',
-}}
+                className="orange-button orange-primary shrink-0 rounded-2xl px-4 py-2 text-sm font-semibold md:px-5 md:py-3 md:text-base"
               >
                 Мои чаты
               </Link>
 
               <Link
                 href="/people"
-                className="glass-button shrink-0 rounded-2xl px-4 py-2"
-                style={{ background: 'var(--panel-2)', color: 'var(--text)' }}
+                className="orange-button orange-secondary shrink-0 rounded-2xl px-4 py-2 text-sm font-medium md:px-5 md:py-3 md:text-base"
               >
                 Люди
               </Link>
 
               <Link
                 href="/profile"
-                className="glass-button shrink-0 rounded-2xl px-4 py-2"
-                style={{ background: 'var(--panel-2)', color: 'var(--text)' }}
+                className="orange-button orange-secondary shrink-0 rounded-2xl px-4 py-2 text-sm font-medium md:px-5 md:py-3 md:text-base"
               >
                 Профиль
               </Link>
@@ -74,36 +61,24 @@ export async function SiteHeader() {
               {username ? (
                 <Link
                   href={`/u/${username}`}
-                  className="glass-button shrink-0 rounded-2xl px-4 py-2"
-                  style={{ background: 'var(--panel-2)', color: 'var(--text)' }}
+                  className="orange-button orange-secondary shrink-0 rounded-2xl px-4 py-2 text-sm font-medium md:px-5 md:py-3 md:text-base"
                 >
                   Моя страница
                 </Link>
               ) : null}
-
-              <form action="/chat" method="get">
-                <button
-                  className="shrink-0 rounded-2xl px-4 py-2 font-medium"
-                  style={{ background: 'var(--primary)', color: 'var(--primary-text)' }}
-                >
-                  Открыть чат
-                </button>
-              </form>
             </>
           ) : (
             <>
               <Link
                 href="/login"
-                className="glass-button shrink-0 rounded-2xl px-4 py-2"
-                style={{ background: 'var(--panel-2)', color: 'var(--text)' }}
+                className="orange-button orange-secondary shrink-0 rounded-2xl px-4 py-2 text-sm font-medium md:px-5 md:py-3 md:text-base"
               >
                 Войти
               </Link>
 
               <Link
                 href="/register"
-                className="rounded-2xl px-4 py-2 font-medium"
-                style={{ background: 'var(--primary)', color: 'var(--primary-text)' }}
+                className="orange-button orange-primary shrink-0 rounded-2xl px-4 py-2 text-sm font-semibold md:px-5 md:py-3 md:text-base"
               >
                 Регистрация
               </Link>
