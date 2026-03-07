@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { startDirectChat } from './actions'
 
 export default async function PublicProfilePage({
   params,
@@ -16,49 +17,21 @@ export default async function PublicProfilePage({
 
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
+  const { data: profile, error } = await supabase
     .from('profiles')
     .select('id, username, display_name, bio, avatar_url')
     .eq('username', username.toLowerCase())
-    .single()
+    .maybeSingle()
 
-  if (!profile) notFound()
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  if (!profile) {
+    notFound()
+  }
 
   const isMe = profile.id === user.id
-
-  async function startDirectChat(formData: FormData) {
-    'use server'
-
-    const otherUserId = String(formData.get('otherUserId') || '')
-
-    if (!otherUserId) {
-      throw new Error('Не передан user id')
-    }
-
-    const supabase = await createClient()
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      throw new Error('Unauthorized')
-    }
-
-    const { data, error } = await supabase.rpc('find_or_create_direct_dialog', {
-      other_user_id: otherUserId,
-    })
-
-    if (error) {
-      throw new Error(error.message)
-    }
-
-    if (!data) {
-      throw new Error('Диалог не был создан')
-    }
-
-    redirect(`/chat?dialog=${data}`)
-  }
 
   return (
     <main className="min-h-screen p-6" style={{ background: 'var(--bg)' }}>
@@ -84,11 +57,11 @@ export default async function PublicProfilePage({
 
           <div className="flex-1">
             <h1 className="text-3xl font-bold">
-              {profile.display_name || profile.username}
+              {profile.display_name || profile.username || 'Пользователь'}
             </h1>
 
             <div className="mt-2 text-lg" style={{ color: 'var(--text-muted)' }}>
-              @{profile.username}
+              {profile.username ? `@${profile.username}` : 'Без username'}
             </div>
 
             <p className="mt-4 whitespace-pre-wrap leading-7">
@@ -105,8 +78,12 @@ export default async function PublicProfilePage({
                   Редактировать профиль
                 </Link>
               ) : (
-                <form action={startDirectChat}>
-                  <input type="hidden" name="otherUserId" value={profile.id} />
+                <form
+                  action={async () => {
+                    'use server'
+                    await startDirectChat(profile.id)
+                  }}
+                >
                   <button
                     type="submit"
                     className="rounded-2xl px-5 py-3 font-medium"

@@ -18,6 +18,10 @@ export async function startDirectChat(otherUserId: string) {
     throw new Error('Не передан пользователь для чата')
   }
 
+  if (otherUserId === user.id) {
+    throw new Error('Нельзя создать чат с самим собой')
+  }
+
   const { data, error } = await supabase.rpc('find_or_create_direct_dialog', {
     other_user_id: otherUserId,
   })
