@@ -42,6 +42,21 @@ export function ChatMessages({
   const isFirstRenderRef = useRef(true)
 
   useEffect(() => {
+  const handler = () => {
+    bottomRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'end',
+    })
+  }
+
+  window.addEventListener('chat-force-scroll-bottom', handler)
+
+  return () => {
+    window.removeEventListener('chat-force-scroll-bottom', handler)
+  }
+}, [])
+
+  useEffect(() => {
     const unique = Array.from(
       new Map(initialMessages.map((msg) => [msg.id, msg])).values()
     )

@@ -3,8 +3,10 @@
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { getPresenceLabel } from '@/lib/presence'
 
 type ChatPartner = {
+  last_seen_at: string | null
   id: string
   username: string | null
   display_name: string | null
@@ -100,8 +102,8 @@ export function ChatHeader({
           </div>
 
           <div className="truncate text-sm" style={{ color: 'var(--text-muted)' }}>
-            {typingText || (partner.username ? `@${partner.username}` : 'Без username')}
-          </div>
+  {typingText || getPresenceLabel(partner.last_seen_at)}
+</div>
         </div>
 
         {partner.username ? (

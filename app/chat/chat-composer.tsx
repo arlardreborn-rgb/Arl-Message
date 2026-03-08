@@ -110,6 +110,7 @@ export function ChatComposer({ dialogId }: { dialogId: string }) {
       if (error) throw error
 
       setText('')
+      window.dispatchEvent(new CustomEvent('chat-force-scroll-bottom'))
       await broadcastTyping(false)
     } finally {
       setSending(false)
@@ -160,7 +161,7 @@ export function ChatComposer({ dialogId }: { dialogId: string }) {
           mime_type: file.type,
           size_bytes: file.size,
         })
-
+window.dispatchEvent(new CustomEvent('chat-force-scroll-bottom'))
       if (attachmentError) throw attachmentError
     } finally {
       setUploading(false)

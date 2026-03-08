@@ -10,6 +10,7 @@ import { MarkDialogRead } from './mark-dialog-read'
 type DialogItem = {
   id: string
   partner: {
+    last_seen_at: string | null
     id: string
     username: string | null
     display_name: string | null
@@ -24,6 +25,7 @@ type DialogItem = {
 }
 
 type PartnerRow = {
+  last_seen_at: string | null
   dialog_id: string
   partner_id: string
   username: string | null
@@ -73,6 +75,7 @@ export default async function ChatPage({
     partnersData.map((row) => [
       row.dialog_id,
       {
+        last_seen_at: row.last_seen_at,
         id: row.partner_id,
         username: row.username,
         display_name: row.display_name,
