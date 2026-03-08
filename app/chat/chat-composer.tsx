@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { compressChatImage } from '@/lib/images/compress-image'
 
 function transliterateRu(text: string) {
   const map: Record<string, string> = {
@@ -132,11 +133,15 @@ export function ChatComposer({ dialogId }: { dialogId: string }) {
       const safeName = sanitizeFileName(file.name)
       const filePath = `${dialogId}/${user.id}/${Date.now()}-${safeName}`
 
-      const { error: uploadError } = await supabase.storage
-        .from('chat-files')
-        .upload(filePath, file)
+      let uploadFile = file
 
-      if (uploadError) throw uploadError
+    if (file.type.startsWith('image/')) {
+    uploadFile = await compressChatImage(file)
+    }
+
+    await supabase.storage.from('chat-files').upload(filePath, uploadFile, {
+    contentType: uploadFile.type,
+    })
 
       const messageBody = file.type.startsWith('image/') ? 'Изображение' : 'Файл'
 

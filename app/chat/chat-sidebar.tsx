@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import Image from 'next/image'
 
 type SidebarItem = {
   id: string
@@ -160,11 +161,14 @@ export function ChatSidebar({
                   style={{ width: 52, height: 52 }}
                 >
                   {item.partner?.avatar_url ? (
-                    <img
-                      src={item.partner.avatar_url}
-                      alt="avatar"
-                      className="h-full w-full object-cover"
-                    />
+                   <Image
+  src={item.partner.avatar_url}
+  alt="avatar"
+  width={52}
+  height={52}
+  className="h-full w-full object-cover"
+  sizes="52px"
+/>
                   ) : (
                     <span className="text-xs font-semibold text-white">AVA</span>
                   )}

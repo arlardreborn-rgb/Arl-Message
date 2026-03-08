@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import Image from 'next/image'
 
 export default async function PeoplePage({
   searchParams,
@@ -79,11 +80,14 @@ export default async function PeoplePage({
                   <div className="flex items-start gap-4">
                     <div className="orange-3d flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full">
                       {profile.avatar_url ? (
-                        <img
-                          src={profile.avatar_url}
-                          alt="avatar"
-                          className="h-full w-full object-cover"
-                        />
+                       <Image
+  src={profile.avatar_url}
+  alt="avatar"
+  width={112}
+  height={112}
+  className="h-full w-full object-cover"
+  sizes="112px"
+/>
                       ) : (
                         <span className="text-xs font-semibold text-white">AVA</span>
                       )}

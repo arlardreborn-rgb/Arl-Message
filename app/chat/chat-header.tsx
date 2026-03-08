@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getPresenceLabel } from '@/lib/presence'
+import Image from 'next/image'
 
 type ChatPartner = {
   last_seen_at: string | null
@@ -86,11 +87,15 @@ export function ChatHeader({
           className="orange-3d flex h-14 w-14 items-center justify-center overflow-hidden rounded-full"
         >
           {partner.avatar_url ? (
-            <img
-              src={partner.avatar_url}
-              alt="avatar"
-              className="h-full w-full object-cover"
-            />
+            
+<Image
+  src={partner.avatar_url}
+  alt="avatar"
+  width={56}
+  height={56}
+  className="h-full w-full object-cover"
+  sizes="56px"
+/>
           ) : (
             <span className="text-sm font-semibold text-white">AVA</span>
           )}

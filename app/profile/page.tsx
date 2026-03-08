@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import Image from 'next/image'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -83,11 +84,14 @@ export default async function ProfilePage() {
               <div className="flex flex-col items-center text-center">
                 <div className="orange-3d flex h-28 w-28 items-center justify-center overflow-hidden rounded-full">
                   {profile?.avatar_url ? (
-                    <img
-                      src={profile.avatar_url}
-                      alt="avatar"
-                      className="h-full w-full object-cover"
-                    />
+                   <Image
+  src={profile.avatar_url}
+  alt="avatar"
+  width={112}
+  height={112}
+  className="h-full w-full object-cover"
+  sizes="112px"
+/>
                   ) : (
                     <span className="text-sm font-semibold text-white">AVA</span>
                   )}

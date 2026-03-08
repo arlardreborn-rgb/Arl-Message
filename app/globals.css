@@ -53,6 +53,24 @@ a {
 ::selection {
   background: rgba(255, 122, 26, 0.18);
 }
+@media (max-width: 768px) {
+  .orange-glass {
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    box-shadow: 0 8px 20px rgba(255, 122, 26, 0.08);
+  }
+
+  .orange-glass-soft {
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    box-shadow: 0 6px 14px rgba(255, 122, 26, 0.05);
+  }
+
+  .orange-blob {
+    opacity: 0.35;
+    filter: blur(3px);
+  }
+}
 
 .orange-glass {
   background: var(--bg-elevated);
